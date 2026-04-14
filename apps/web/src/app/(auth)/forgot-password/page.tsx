@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useTenant } from '@/providers/TenantProvider';
 
 export default function ForgotPasswordPage() {
-  const tenant = useTenant();
+  const { branding, tenant } = useTenant();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
 
@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
     onSuccess: () => setSent(true),
   });
 
-  const brandColor = tenant?.branding?.primaryColor ?? '#2563eb';
+  const brandColor = branding?.primaryColor ?? '#2563eb';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
@@ -24,8 +24,8 @@ export default function ForgotPasswordPage() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8">
           {/* Logo */}
           <div className="flex justify-center mb-8">
-            {tenant?.branding?.logoUrl ? (
-              <img src={tenant.branding.logoUrl} alt={tenant.name} className="h-10 object-contain" />
+            {branding?.logoUrl ? (
+              <img src={branding.logoUrl} alt={tenant?.name ?? ''} className="h-10 object-contain" />
             ) : (
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: brandColor }}>
                 {(tenant?.name ?? 'O').charAt(0)}
@@ -106,7 +106,6 @@ export default function ForgotPasswordPage() {
           )}
         </div>
 
-        {/* Tenant name */}
         {tenant && (
           <p className="text-center text-xs text-slate-400 mt-4">
             {tenant.name}

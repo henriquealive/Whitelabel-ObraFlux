@@ -12,13 +12,13 @@ export default function Verify2FAPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const preAuthToken = searchParams.get('token') ?? '';
-  const tenant = useTenant();
+  const { branding, tenant } = useTenant();
   const setTokens = useAuthStore((s) => s.setTokens);
   const fetchProfile = useAuthStore((s) => s.fetchProfile);
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
 
-  const brandColor = tenant?.branding?.primaryColor ?? '#2563eb';
+  const brandColor = branding?.primaryColor ?? '#2563eb';
 
   const verifyMutation = useMutation({
     mutationFn: () =>
@@ -62,8 +62,8 @@ export default function Verify2FAPage() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8">
           {/* Logo */}
           <div className="flex justify-center mb-8">
-            {tenant?.branding?.logoUrl ? (
-              <img src={tenant.branding.logoUrl} alt={tenant.name} className="h-10 object-contain" />
+            {branding?.logoUrl ? (
+              <img src={branding.logoUrl} alt={tenant?.name ?? ''} className="h-10 object-contain" />
             ) : (
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: brandColor }}>
                 {(tenant?.name ?? 'O').charAt(0)}
@@ -134,6 +134,7 @@ export default function Verify2FAPage() {
         {tenant && (
           <p className="text-center text-xs text-slate-400 mt-4">{tenant.name}</p>
         )}
+
       </div>
     </div>
   );
