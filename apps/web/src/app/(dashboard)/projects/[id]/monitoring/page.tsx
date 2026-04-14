@@ -127,7 +127,7 @@ function CameraCard({ camera, tenantId, isSelected, onSelect }: {
       </div>
       <div className="p-3 bg-slate-800">
         <p className="text-white text-sm font-medium">{camera.name as string}</p>
-        {camera.location && <p className="text-slate-400 text-xs">{camera.location as string}</p>}
+        {Boolean(camera.location) && <p className="text-slate-400 text-xs">{camera.location as string}</p>}
       </div>
     </div>
   );
