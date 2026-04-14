@@ -25,7 +25,7 @@ export default function Verify2FAPage() {
       api.post('/v1/auth/2fa/verify', { token: preAuthToken, totpToken: code }),
     onSuccess: async (res) => {
       const { accessToken, refreshToken } = res.data;
-      setTokens(accessToken, refreshToken);
+      setTokens({ accessToken, refreshToken });
       await fetchProfile();
       router.push('/dashboard');
     },
