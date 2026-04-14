@@ -24,8 +24,8 @@ export default function Verify2FAPage() {
     mutationFn: () =>
       api.post('/v1/auth/2fa/verify', { token: preAuthToken, totpToken: code }),
     onSuccess: async (res) => {
-      const { accessToken, refreshToken } = res.data;
-      setTokens({ accessToken, refreshToken });
+      const { accessToken, refreshToken, expiresIn } = res.data;
+      setTokens({ accessToken, refreshToken, expiresIn });
       await fetchProfile();
       router.push('/dashboard');
     },
