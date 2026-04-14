@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard label="Total de obras" value={Object.values(stats.byStatus ?? {}).reduce((a: number, b) => a + (b as number), 0)} />
+        <StatCard label="Total de obras" value={Object.values(stats.byStatus ?? {}).reduce((a: number, b: number) => a + (b as number), 0)} />
         <StatCard label="Em andamento" value={(stats.byStatus?.IN_PROGRESS ?? 0) as number} highlight />
         <StatCard label="Valor total contratado" value={formatCurrency(stats.totalContractValue ?? 0)} />
         <StatCard label="Progresso médio" value={`${stats.avgProgress ?? 0}%`} />

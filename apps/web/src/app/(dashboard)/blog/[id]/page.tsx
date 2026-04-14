@@ -178,7 +178,7 @@ export default function BlogPostPage() {
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[post.status]}`}>
               {STATUS_LABELS[post.status]}
             </span>
-            {post.tags.map((tag) => (
+            {(post.tags as string[]).map((tag: string) => (
               <span key={tag} className="text-xs bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-full">
                 {tag}
               </span>
