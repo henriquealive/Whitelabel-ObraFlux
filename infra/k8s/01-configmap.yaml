@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: obraflux-config
+  namespace: obraflux
+data:
+  NODE_ENV: "production"
+  API_PORT: "3001"
+  WEB_PORT: "3000"
+  POSTGRES_DB: "obraflux"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  GO2RTC_URL: "http://go2rtc-service:1984"
+  # Override in Secret for sensitive values

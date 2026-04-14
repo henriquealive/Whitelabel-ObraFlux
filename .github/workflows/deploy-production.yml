@@ -1,0 +1,131 @@
+name: Deploy — Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy (default: latest sha)'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  NAMESPACE: obraflux
+  KUBE_CONTEXT: production
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.obraflux.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: |
+          if [[ -n "${{ inputs.image_tag }}" ]]; then
+            echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "IMAGE_TAG=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Verify images exist
+        run: |
+          docker manifest inspect ghcr.io/${{ github.repository }}/api:${{ steps.tag.outputs.IMAGE_TAG }}
+          docker manifest inspect ghcr.io/${{ github.repository }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
+
+      - name: Run DB migrations (Job)
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: db-migrate-prod-${{ github.run_number }}
+            namespace: ${{ env.NAMESPACE }}
+          spec:
+            ttlSecondsAfterFinished: 600
+            template:
+              spec:
+                restartPolicy: OnFailure
+                containers:
+                  - name: migrate
+                    image: ghcr.io/${{ github.repository }}/api:${{ steps.tag.outputs.IMAGE_TAG }}
+                    command: ["npx", "prisma", "migrate", "deploy"]
+                    envFrom:
+                      - secretRef:
+                          name: obraflux-secrets
+          EOF
+          kubectl wait --for=condition=complete job/db-migrate-prod-${{ github.run_number }} \
+            -n ${{ env.NAMESPACE }} --timeout=180s
+
+      - name: Deploy API (rolling update)
+        run: |
+          kubectl set image deployment/api \
+            api=ghcr.io/${{ github.repository }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
+            -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/api -n ${{ env.NAMESPACE }} --timeout=180s
+
+      - name: Deploy Web (rolling update)
+        run: |
+          kubectl set image deployment/web \
+            web=ghcr.io/${{ github.repository }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
+            -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/web -n ${{ env.NAMESPACE }} --timeout=180s
+
+      - name: Smoke tests
+        run: |
+          sleep 15
+          curl -sf https://api.obraflux.com/api/health | jq .
+          curl -sf -o /dev/null -w "%{http_code}" https://app.obraflux.com | grep -qE "^(200|301|302)"
+          echo "✓ Production health checks passed"
+
+      - name: Record deployment
+        if: success()
+        run: |
+          echo "Deployed image tag: ${{ steps.tag.outputs.IMAGE_TAG }}"
+          echo "Deployed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Auto-rollback on failure
+        if: failure()
+        run: |
+          echo "⚠️  Deployment failed — initiating rollback..."
+          kubectl rollout undo deployment/api -n ${{ env.NAMESPACE }} || true
+          kubectl rollout undo deployment/web -n ${{ env.NAMESPACE }} || true
+          kubectl rollout status deployment/api -n ${{ env.NAMESPACE }} --timeout=120s || true
+          kubectl rollout status deployment/web -n ${{ env.NAMESPACE }} --timeout=120s || true
+          echo "✓ Rollback complete"
+          exit 1
+
+      - name: Create GitHub release tag
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = `release/${{ steps.tag.outputs.IMAGE_TAG }}`;
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tag}`,
+              sha: context.sha
+            });
+            console.log(`Tagged release: ${tag}`);

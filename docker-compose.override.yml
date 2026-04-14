@@ -1,0 +1,32 @@
+# Development overrides — applied automatically alongside docker-compose.yml
+version: '3.9'
+
+services:
+  api:
+    build:
+      target: development
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    environment:
+      NODE_ENV: development
+    command: pnpm --filter api dev
+
+  web:
+    build:
+      target: development
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/web/node_modules
+    environment:
+      NODE_ENV: development
+    command: pnpm --filter web dev
+
+  mailhog:
+    ports:
+      - '1025:1025'
+      - '8025:8025'

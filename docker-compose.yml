@@ -1,0 +1,119 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: obraflux_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-obraflux}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-obraflux_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-obraflux}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-obraflux}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: obraflux_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secret}
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--pass', '${REDIS_PASSWORD:-redis_secret}', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  go2rtc:
+    image: alexxit/go2rtc:latest
+    container_name: obraflux_go2rtc
+    restart: unless-stopped
+    volumes:
+      - ./infra/docker/go2rtc/go2rtc.yaml:/config/go2rtc.yaml:ro
+    ports:
+      - '1984:1984'   # HTTP / WebRTC signaling
+      - '8554:8554'   # RTSP server
+      - '8555:8555/tcp'
+      - '8555:8555/udp'
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      target: production
+    container_name: obraflux_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-obraflux}:${POSTGRES_PASSWORD:-obraflux_secret}@postgres:5432/${POSTGRES_DB:-obraflux}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379
+    ports:
+      - '3001:3001'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3001/api/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      target: production
+    container_name: obraflux_web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://api:3001/api
+    ports:
+      - '3000:3000'
+
+  nginx:
+    image: nginx:alpine
+    container_name: obraflux_nginx
+    restart: unless-stopped
+    depends_on:
+      - web
+      - api
+    volumes:
+      - ./infra/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - '80:80'
+      - '443:443'
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: obraflux_mailhog
+    restart: unless-stopped
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: obraflux_network

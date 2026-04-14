@@ -1,0 +1,33 @@
+# go2rtc configuration — RTSP → WebRTC / HLS gateway
+# See: https://github.com/AlexxIT/go2rtc
+
+api:
+  listen: ':1984'
+  # Restrict to internal network only — do NOT expose publicly
+  origin: '*'
+
+rtsp:
+  listen: ':8554'
+  # Use a strong password in production via RTSP_PASSWORD env var
+  username: 'obraflux'
+  password: '${RTSP_PASSWORD}'
+
+webrtc:
+  listen: ':8555'
+  # ICE candidate servers — add TURN for NAT traversal in production
+  ice_servers:
+    - urls:
+        - stun:stun.l.google.com:19302
+        - stun:stun1.l.google.com:19302
+
+# Streams are dynamically added at runtime by the API via go2rtc HTTP API.
+# Example stream (statically defined cameras can be added here):
+#
+# streams:
+#   camera_example:
+#     - rtsp://user:pass@192.168.1.100:554/stream
+#
+
+log:
+  level: info
+  # format: json

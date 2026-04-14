@@ -1,0 +1,97 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+  NAMESPACE: obraflux-staging
+  KUBE_CONTEXT: staging
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.obraflux.com
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: echo "IMAGE_TAG=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Run DB migrations (Job)
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: db-migrate-${{ github.run_number }}
+            namespace: ${{ env.NAMESPACE }}
+          spec:
+            ttlSecondsAfterFinished: 300
+            template:
+              spec:
+                restartPolicy: OnFailure
+                containers:
+                  - name: migrate
+                    image: ghcr.io/${{ github.repository }}/api:${{ steps.tag.outputs.IMAGE_TAG }}
+                    command: ["npx", "prisma", "migrate", "deploy"]
+                    envFrom:
+                      - secretRef:
+                          name: obraflux-secrets
+          EOF
+          kubectl wait --for=condition=complete job/db-migrate-${{ github.run_number }} \
+            -n ${{ env.NAMESPACE }} --timeout=120s
+
+      - name: Deploy API
+        run: |
+          kubectl set image deployment/api \
+            api=ghcr.io/${{ github.repository }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
+            -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/api -n ${{ env.NAMESPACE }} --timeout=120s
+
+      - name: Deploy Web
+        run: |
+          kubectl set image deployment/web \
+            web=ghcr.io/${{ github.repository }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
+            -n ${{ env.NAMESPACE }}
+          kubectl rollout status deployment/web -n ${{ env.NAMESPACE }} --timeout=120s
+
+      - name: Smoke test
+        run: |
+          sleep 10
+          curl -f https://api-staging.obraflux.com/api/health || exit 1
+          echo "✓ Staging health check passed"
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ Staging deployment failed. Check [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.'
+            })

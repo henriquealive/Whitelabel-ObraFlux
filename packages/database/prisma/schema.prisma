@@ -1,0 +1,751 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  PROJECT_MANAGER
+  COLLABORATOR
+  CLIENT
+}
+
+enum ProjectStatus {
+  DRAFT
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TimelineEntryType {
+  PHOTO
+  VIDEO
+  REPORT
+  NOTE
+  MILESTONE
+}
+
+enum TransactionType {
+  REVENUE
+  EXPENSE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FileMimeCategory {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  SPREADSHEET
+  OTHER
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+enum BillingInterval {
+  MONTHLY
+  ANNUAL
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  UPLOAD
+  DOWNLOAD
+  APPROVE
+  REJECT
+  INVITE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANT
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id           String    @id @default(cuid())
+  name         String
+  slug         String    @unique
+  customDomain String?   @unique
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  branding       TenantBranding?
+  users          User[]
+  projects       Project[]
+  blogPosts      BlogPost[]
+  coupons        Coupon[]
+  subscription   Subscription?
+  featureFlags   FeatureFlag[]
+  auditLogs      AuditLog[]
+  emailTemplates EmailTemplate[]
+  cameras        Camera[]
+  invitations    Invitation[]
+
+  @@index([slug])
+  @@index([customDomain])
+}
+
+model TenantBranding {
+  id               String  @id @default(cuid())
+  tenantId         String  @unique
+  tenant           Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  logoUrl          String?
+  faviconUrl       String?
+  primaryColor     String  @default("#2563EB")
+  secondaryColor   String  @default("#7C3AED")
+  accentColor      String  @default("#10B981")
+  backgroundColor  String  @default("#FFFFFF")
+  fontFamily       String  @default("Inter")
+  borderRadius     String  @default("8px")
+  companyName      String?
+  tagline          String?
+  footerText       String?
+  supportEmail     String?
+  supportPhone     String?
+  privacyPolicyUrl String?
+  termsUrl         String?
+  customCss        String? @db.Text
+  metaTitle        String?
+  metaDescription  String?
+  ogImageUrl       String?
+
+  updatedAt DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key       String
+  subject   String
+  htmlBody  String   @db.Text
+  textBody  String   @db.Text
+  variables Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  email              String
+  password           String?
+  name               String
+  avatarUrl          String?
+  phone              String?
+  role               Role      @default(COLLABORATOR)
+  isActive           Boolean   @default(true)
+  isEmailVerified    Boolean   @default(false)
+  emailVerifyToken   String?
+  passwordResetToken String?
+  passwordResetAt    DateTime?
+
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String?
+  backupCodes      String[]
+
+  oauthProvider String?
+  oauthId       String?
+
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  refreshTokens    RefreshToken[]
+  projectMembers   ProjectMember[]
+  timelineEntries  TimelineEntry[]
+  transactions     FinancialTransaction[]
+  files            File[]
+  folders          Folder[]
+  blogPosts        BlogPost[]
+  auditLogs        AuditLog[]
+  notifications    Notification[]
+  maintenanceLogs  MaintenanceLog[]
+  approvals        FinancialApproval[]
+  invitedBy        Invitation[]           @relation("inviter")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([email])
+  @@index([oauthProvider, oauthId])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  family    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([family])
+}
+
+model Invitation {
+  id         String    @id @default(cuid())
+  tenantId   String
+  email      String
+  role       Role
+  token      String    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  inviterId  String
+  inviter    User      @relation("inviter", fields: [inviterId], references: [id])
+  createdAt  DateTime  @default(now())
+
+  @@index([tenantId, email])
+  @@index([token])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Project {
+  id            String        @id @default(cuid())
+  tenantId      String
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?       @db.Text
+  address       String?
+  city          String?
+  state         String?
+  country       String        @default("BR")
+  status        ProjectStatus @default(DRAFT)
+  progressPct   Int           @default(0)
+  startDate     DateTime?
+  estimatedEnd  DateTime?
+  actualEnd     DateTime?
+  contractValue Decimal?      @db.Decimal(15, 2)
+  coverImageUrl String?
+  tags          String[]
+  metadata      Json?
+  deletedAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  members         ProjectMember[]
+  timelineEntries TimelineEntry[]
+  transactions    FinancialTransaction[]
+  budgets         Budget[]
+  files           File[]
+  folders         Folder[]
+  cameras         Camera[]
+  maintenanceLogs MaintenanceLog[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, deletedAt])
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role
+  joinedAt  DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIMELINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model TimelineEntry {
+  id          String            @id @default(cuid())
+  tenantId    String
+  projectId   String
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User              @relation(fields: [authorId], references: [id])
+  type        TimelineEntryType
+  title       String?
+  content     String?           @db.Text
+  isPinned    Boolean           @default(false)
+  visibleTo   Role[]
+  metadata    Json?
+  recordedAt  DateTime          @default(now())
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  mediaFiles TimelineMedia[]
+
+  @@index([tenantId, projectId])
+  @@index([projectId, recordedAt])
+}
+
+model TimelineMedia {
+  id              String        @id @default(cuid())
+  timelineEntryId String
+  entry           TimelineEntry @relation(fields: [timelineEntryId], references: [id], onDelete: Cascade)
+  s3Key           String
+  s3Bucket        String
+  fileName        String
+  mimeType        String
+  sizeBytes       BigInt
+  width           Int?
+  height          Int?
+  durationSecs    Float?
+  thumbnailS3Key  String?
+  order           Int           @default(0)
+  createdAt       DateTime      @default(now())
+
+  @@index([timelineEntryId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINANCIAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Budget {
+  id          String    @id @default(cuid())
+  tenantId    String
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  totalAmount Decimal   @db.Decimal(15, 2)
+  notes       String?   @db.Text
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  categories BudgetCategory[]
+
+  @@index([tenantId, projectId])
+}
+
+model BudgetCategory {
+  id           String   @id @default(cuid())
+  budgetId     String
+  budget       Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  name         String
+  allocatedAmt Decimal  @db.Decimal(15, 2)
+
+  transactions FinancialTransaction[]
+
+  @@index([budgetId])
+}
+
+model FinancialTransaction {
+  id               String          @id @default(cuid())
+  tenantId         String
+  projectId        String
+  project          Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  budgetCategoryId String?
+  budgetCategory   BudgetCategory? @relation(fields: [budgetCategoryId], references: [id])
+  createdById      String
+  createdBy        User            @relation(fields: [createdById], references: [id])
+  type             TransactionType
+  description      String
+  amount           Decimal         @db.Decimal(15, 2)
+  currency         String          @default("BRL")
+  dueDate          DateTime?
+  paidAt           DateTime?
+  receiptS3Key     String?
+  invoiceNumber    String?
+  vendor           String?
+  notes            String?         @db.Text
+  tags             String[]
+  approvalStatus   ApprovalStatus  @default(PENDING)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  deletedAt        DateTime?
+
+  approvals FinancialApproval[]
+
+  @@index([tenantId, projectId])
+  @@index([tenantId, type])
+  @@index([tenantId, approvalStatus])
+}
+
+model FinancialApproval {
+  id            String               @id @default(cuid())
+  transactionId String
+  transaction   FinancialTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User                 @relation(fields: [userId], references: [id])
+  status        ApprovalStatus
+  comment       String?
+  decidedAt     DateTime             @default(now())
+
+  @@index([transactionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILE DRIVE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Folder {
+  id          String    @id @default(cuid())
+  tenantId    String
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      Folder?   @relation("FolderTree", fields: [parentId], references: [id])
+  children    Folder[]  @relation("FolderTree")
+  name        String
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  allowedRoles Role[]
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+
+  files File[]
+
+  @@index([tenantId, projectId])
+  @@index([parentId])
+}
+
+model File {
+  id           String          @id @default(cuid())
+  tenantId     String
+  projectId    String?
+  project      Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folderId     String?
+  folder       Folder?         @relation(fields: [folderId], references: [id])
+  uploadedById String
+  uploadedBy   User            @relation(fields: [uploadedById], references: [id])
+  fileName     String
+  originalName String
+  mimeType     String
+  mimeCategory FileMimeCategory
+  sizeBytes    BigInt
+  s3Key        String
+  s3Bucket     String
+  s3Etag       String?
+  checksumMd5  String?
+  version      Int             @default(1)
+  isPublic     Boolean         @default(false)
+  allowedRoles Role[]
+  description  String?
+  tags         String[]
+  metadata     Json?
+  deletedAt    DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([tenantId, projectId])
+  @@index([tenantId, folderId])
+  @@index([s3Key])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LIVE MONITORING
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Camera {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  rtspUrl        String
+  description    String?
+  location       String?
+  isActive       Boolean  @default(true)
+  thumbnailS3Key String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId, projectId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BLOG
+// ─────────────────────────────────────────────────────────────────────────────
+
+model BlogPost {
+  id              String         @id @default(cuid())
+  tenantId        String
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User           @relation(fields: [authorId], references: [id])
+  title           String
+  slug            String
+  excerpt         String?        @db.Text
+  content         String         @db.Text
+  coverImageUrl   String?
+  status          BlogPostStatus @default(DRAFT)
+  publishedAt     DateTime?
+  metaTitle       String?
+  metaDescription String?
+  canonicalUrl    String?
+  ogImageUrl      String?
+  structuredData  Json?
+  tags            String[]
+  readingTimeMins Int            @default(1)
+  viewCount       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, status])
+  @@index([tenantId, publishedAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COUPONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id              String           @id @default(cuid())
+  tenantId        String?
+  tenant          Tenant?          @relation(fields: [tenantId], references: [id])
+  code            String           @unique
+  description     String?
+  type            CouponType
+  value           Decimal          @db.Decimal(10, 2)
+  maxUses         Int?
+  usedCount       Int              @default(0)
+  minAmount       Decimal?         @db.Decimal(15, 2)
+  applicablePlans SubscriptionPlan[]
+  validFrom       DateTime         @default(now())
+  validUntil      DateTime?
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+
+  redemptions CouponRedemption[]
+
+  @@index([code])
+  @@index([tenantId])
+}
+
+model CouponRedemption {
+  id             String       @id @default(cuid())
+  couponId       String
+  coupon         Coupon       @relation(fields: [couponId], references: [id])
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  redeemedAt     DateTime     @default(now())
+  discountAmount Decimal      @db.Decimal(10, 2)
+
+  @@index([couponId])
+  @@index([subscriptionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUBSCRIPTIONS & BILLING
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  tenantId             String             @unique
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  stripeProductId      String?
+  plan                 SubscriptionPlan   @default(BASIC)
+  status               SubscriptionStatus @default(TRIALING)
+  billingInterval      BillingInterval    @default(MONTHLY)
+  trialEndsAt          DateTime?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  maxUsers             Int                @default(5)
+  maxProjects          Int                @default(3)
+  storageGb            Int                @default(5)
+  usedStorageBytes     BigInt             @default(0)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  couponRedemptions CouponRedemption[]
+  invoices          Invoice[]
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
+model Invoice {
+  id               String       @id @default(cuid())
+  subscriptionId   String
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  stripeInvoiceId  String?      @unique
+  amountDue        Decimal      @db.Decimal(10, 2)
+  amountPaid       Decimal      @db.Decimal(10, 2)
+  currency         String       @default("BRL")
+  status           String
+  pdfUrl           String?
+  invoiceNumber    String?
+  periodStart      DateTime?
+  periodEnd        DateTime?
+  createdAt        DateTime     @default(now())
+
+  @@index([subscriptionId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAINTENANCE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model MaintenanceLog {
+  id           String            @id @default(cuid())
+  tenantId     String
+  projectId    String
+  project      Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reportedById String
+  reportedBy   User              @relation(fields: [reportedById], references: [id])
+  title        String
+  description  String            @db.Text
+  status       MaintenanceStatus @default(OPEN)
+  priority     Int               @default(2)
+  category     String?
+  attachments  String[]
+  resolvedAt   DateTime?
+  dueDate      DateTime?
+  notes        String?           @db.Text
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([tenantId, projectId])
+  @@index([tenantId, status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId  String
+  type      String
+  title     String
+  body      String
+  channel   NotificationChannel @default(IN_APP)
+  isRead    Boolean             @default(false)
+  readAt    DateTime?
+  data      Json?
+  createdAt DateTime            @default(now())
+
+  @@index([userId, isRead])
+  @@index([tenantId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  tenantId  String
+  tenant    Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    AuditAction
+  entity    String
+  entityId  String?
+  oldValues Json?
+  newValues Json?
+  ip        String?
+  userAgent String?
+  requestId String?
+  createdAt DateTime    @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entity, entityId])
+  @@index([tenantId, userId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEATURE FLAGS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model FeatureFlag {
+  id           String           @id @default(cuid())
+  tenantId     String?
+  tenant       Tenant?          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key          String
+  isEnabled    Boolean          @default(false)
+  rolloutPct   Int              @default(100)
+  allowedPlans SubscriptionPlan[]
+  config       Json?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([tenantId, key])
+  @@index([tenantId])
+}
