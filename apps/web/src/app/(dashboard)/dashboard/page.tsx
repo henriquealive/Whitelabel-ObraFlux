@@ -25,12 +25,12 @@ const STATUS_LABELS: Record<string, string> = {
 export default function DashboardPage() {
   const { user } = useAuthStore();
 
-  const { data: statsData } = useQuery({
+  const { data: statsData } = useQuery<any>({
     queryKey: ['project-stats'],
     queryFn: () => api.get('/v1/projects/stats').then((r) => r.data.data ?? r.data),
   });
 
-  const { data: projectsData } = useQuery({
+  const { data: projectsData } = useQuery<any>({
     queryKey: ['projects', { limit: 5 }],
     queryFn: () => api.get('/v1/projects?limit=5&sortBy=updatedAt').then((r) => r.data.data ?? r.data),
   });

@@ -15,18 +15,18 @@ export default function FinancialPage() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<'summary' | 'transactions' | 'budgets'>('summary');
 
-  const { data: summary } = useQuery({
+  const { data: summary } = useQuery<any>({
     queryKey: ['financial-summary', id],
     queryFn: () => api.get(`/v1/projects/${id}/financial/summary`).then((r) => r.data.data ?? r.data),
   });
 
-  const { data: txData } = useQuery({
+  const { data: txData } = useQuery<any>({
     queryKey: ['transactions', id],
     queryFn: () => api.get(`/v1/projects/${id}/financial/transactions`).then((r) => r.data.data ?? r.data),
     enabled: tab === 'transactions',
   });
 
-  const { data: budgetData } = useQuery({
+  const { data: budgetData } = useQuery<any>({
     queryKey: ['budgets', id],
     queryFn: () => api.get(`/v1/projects/${id}/financial/budgets`).then((r) => r.data.data ?? r.data),
     enabled: tab === 'budgets',

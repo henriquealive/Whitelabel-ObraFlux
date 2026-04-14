@@ -12,12 +12,12 @@ const STATUS_COLORS: Record<string, string> = { TRIALING: 'bg-blue-100 text-blue
 export default function BillingPage() {
   const [billingInterval, setBillingInterval] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
 
-  const { data: sub } = useQuery({
+  const { data: sub } = useQuery<any>({
     queryKey: ['subscription'],
     queryFn: () => api.get('/v1/subscriptions').then((r) => r.data.data ?? r.data),
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<any>({
     queryKey: ['tenant-stats'],
     queryFn: () => api.get('/v1/tenants/me/stats').then((r) => r.data.data ?? r.data),
   });

@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: project, isLoading } = useQuery({
+  const { data: project, isLoading } = useQuery<any>({
     queryKey: ['project', id],
     queryFn: () => api.get(`/v1/projects/${id}`).then((r) => r.data.data ?? r.data),
   });

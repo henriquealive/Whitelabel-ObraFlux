@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/utils';
 export default function AuditPage() {
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ['audit-logs', page],
     queryFn: () => api.get(`/v1/audit?page=${page}&limit=30`).then((r) => r.data.data ?? r.data),
   });

@@ -37,12 +37,12 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('COLLABORATOR');
 
-  const { data: membersData } = useQuery({
+  const { data: membersData } = useQuery<any>({
     queryKey: ['team-members'],
     queryFn: () => api.get('/v1/users').then((r) => r.data.data ?? r.data),
   });
 
-  const { data: invitesData } = useQuery({
+  const { data: invitesData } = useQuery<any>({
     queryKey: ['invitations'],
     queryFn: () => api.get('/v1/invitations').then((r) => r.data.data ?? r.data),
   });

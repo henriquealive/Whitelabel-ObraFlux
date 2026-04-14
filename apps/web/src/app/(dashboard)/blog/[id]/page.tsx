@@ -42,7 +42,7 @@ export default function BlogPostPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Partial<BlogPost>>({});
 
-  const { data: post, isLoading } = useQuery({
+  const { data: post, isLoading } = useQuery<any>({
     queryKey: ['blog-post', id],
     queryFn: () => api.get(`/v1/blog/${id}`).then((r) => r.data),
     select: (data) => data.data ?? data,

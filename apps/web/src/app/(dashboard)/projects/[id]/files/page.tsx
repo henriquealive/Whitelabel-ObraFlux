@@ -12,12 +12,12 @@ const MIME_ICONS: Record<string, string> = {
 export default function FilesPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: foldersData } = useQuery({
+  const { data: foldersData } = useQuery<any>({
     queryKey: ['folders', id],
     queryFn: () => api.get(`/v1/files/folders?projectId=${id}`).then((r) => r.data.data ?? r.data),
   });
 
-  const { data: filesData } = useQuery({
+  const { data: filesData } = useQuery<any>({
     queryKey: ['files', id],
     queryFn: () => api.get(`/v1/files?projectId=${id}`).then((r) => r.data.data ?? r.data),
   });

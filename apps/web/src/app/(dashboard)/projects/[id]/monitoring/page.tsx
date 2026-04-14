@@ -13,7 +13,7 @@ export default function MonitoringPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
 
-  const { data: cameras = [] } = useQuery({
+  const { data: cameras = [] } = useQuery<any[]>({
     queryKey: ['cameras', id],
     queryFn: () => api.get(`/v1/projects/${id}/monitoring/cameras`).then((r) => r.data.data ?? r.data),
   });

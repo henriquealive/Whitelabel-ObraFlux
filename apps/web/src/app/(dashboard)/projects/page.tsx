@@ -24,7 +24,7 @@ export default function ProjectsPage() {
   const [status, setStatus] = useState<string>('');
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ['projects', { search, status, page }],
     queryFn: () =>
       api.get(`/v1/projects?page=${page}&search=${search}&status=${status}`).then((r) => r.data.data ?? r.data),

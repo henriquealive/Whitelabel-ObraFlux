@@ -20,7 +20,7 @@ export default function TimelinePage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ type: 'NOTE', title: '', content: '' });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ['timeline', id],
     queryFn: () => api.get(`/v1/projects/${id}/timeline?limit=50`).then((r) => r.data.data ?? r.data),
   });

@@ -9,7 +9,7 @@ export default function WhiteLabelPage() {
   const { branding: ctx } = useTenant();
   const qc = useQueryClient();
 
-  const { data: tenantData } = useQuery({
+  const { data: tenantData } = useQuery<any>({
     queryKey: ['tenant-me'],
     queryFn: () => api.get('/v1/tenants/me').then((r) => r.data.data ?? r.data),
   });

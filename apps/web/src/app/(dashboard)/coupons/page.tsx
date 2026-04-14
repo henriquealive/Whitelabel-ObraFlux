@@ -32,7 +32,7 @@ export default function CouponsPage() {
     description: '',
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ['coupons'],
     queryFn: () => api.get('/v1/coupons').then((r) => r.data.data ?? r.data),
   });

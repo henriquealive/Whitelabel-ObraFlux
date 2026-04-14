@@ -19,7 +19,7 @@ export default function MaintenancePage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ['maintenance', id],
     queryFn: () => api.get(`/v1/projects/${id}/maintenance`).then((r) => r.data.data ?? r.data),
   });

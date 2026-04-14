@@ -13,7 +13,7 @@ export default function BlogPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<any>({
     queryKey: ['blog', { search, status }],
     queryFn: () => api.get(`/v1/blog?search=${search}&status=${status}`).then((r) => r.data.data ?? r.data),
   });
