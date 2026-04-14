@@ -72,6 +72,11 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
+  // Health check endpoint (bypasses NestJS guards — required by Railway/K8s probes)
+  app.getHttpAdapter().getInstance().get('/api/health', (_req: unknown, res: { status: (code: number) => { json: (body: unknown) => void } }) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   await app.listen(port);
   console.log(`🚀 ObraFlux API running on http://localhost:${port}/api`);
   console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
