@@ -54,6 +54,7 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/database/generated ./packages/database/generated
+COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 3001
@@ -61,4 +62,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget -qO- http://localhost:3001/api/health || exit 1
 
-CMD ["node", "apps/api/dist/main.js"]
+# Run prisma db push then start the API
+CMD ["sh", "-c", "cd packages/database && npx prisma db push --accept-data-loss && cd /app && node apps/api/dist/main.js"]
