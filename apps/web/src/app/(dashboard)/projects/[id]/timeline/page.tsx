@@ -112,8 +112,8 @@ export default function TimelinePage() {
                 <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      {entry.title && <p className="font-medium text-slate-900 dark:text-white text-sm">{entry.title as string}</p>}
-                      {entry.content && <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{entry.content as string}</p>}
+                      {Boolean(entry.title) && <p className="font-medium text-slate-900 dark:text-white text-sm">{entry.title as string}</p>}
+                      {Boolean(entry.content) && <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{entry.content as string}</p>}
                     </div>
                     <span className="text-xs text-slate-400 whitespace-nowrap">{formatDate(entry.recordedAt as string)}</span>
                   </div>
@@ -121,7 +121,7 @@ export default function TimelinePage() {
                     <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
                       {TYPE_LABELS[entry.type as string] ?? entry.type as string}
                     </span>
-                    {entry.author && (
+                    {Boolean(entry.author) && (
                       <span className="text-xs text-slate-400">por {(entry.author as Record<string, unknown>).name as string}</span>
                     )}
                   </div>

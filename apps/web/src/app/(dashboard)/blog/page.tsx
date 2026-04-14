@@ -61,7 +61,7 @@ export default function BlogPage() {
           {posts.map((post: Record<string, unknown>) => (
             <Link key={post.id as string} href={`/blog/${post.id as string}`}
               className="block bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-shadow">
-              {post.coverImageUrl && (
+              {Boolean(post.coverImageUrl) && (
                 <img src={post.coverImageUrl as string} alt="" className="w-full h-32 object-cover" />
               )}
               <div className="p-4">
@@ -74,7 +74,7 @@ export default function BlogPage() {
                   ))}
                 </div>
                 <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2">{post.title as string}</h3>
-                {post.excerpt && <p className="text-sm text-slate-500 mt-1 line-clamp-2">{post.excerpt as string}</p>}
+                {Boolean(post.excerpt) && <p className="text-sm text-slate-500 mt-1 line-clamp-2">{post.excerpt as string}</p>}
                 <p className="text-xs text-slate-400 mt-2">
                   {post.publishedAt ? `Publicado em ${formatDate(post.publishedAt as string)}` : `Criado em ${formatDate(post.createdAt as string)}`}
                   {' · '}{post.readingTimeMins as number} min de leitura
