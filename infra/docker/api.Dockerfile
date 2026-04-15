@@ -68,5 +68,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget -qO- http://localhost:3001/api/health || exit 1
 
-# Push schema then start the API (pnpm resolves prisma binary reliably vs npx)
-CMD ["sh", "-c", "pnpm --filter @obraflux/database db:push && node apps/api/dist/main.js"]
+# Apply migrations then start the API (migrate deploy runs committed SQL files, no introspection needed)
+CMD ["sh", "-c", "pnpm --filter @obraflux/database db:migrate && node apps/api/dist/main.js"]
