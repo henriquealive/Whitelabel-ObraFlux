@@ -6,17 +6,22 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class StripeWebhookService {
-  private readonly stripe: Stripe;
+  private _stripe: Stripe | null = null;
   private readonly logger = new Logger(StripeWebhookService.name);
 
   constructor(
     private readonly configService: ConfigService,
     private readonly subscriptionsService: SubscriptionsService,
     private readonly prisma: PrismaService,
-  ) {
-    this.stripe = new Stripe(configService.get<string>('stripe.secretKey', ''), {
-      apiVersion: '2025-02-24.acacia',
-    });
+  ) {}
+
+  private get stripe(): Stripe {
+    if (!this._stripe) {
+      const secretKey = this.configService.get<string>('stripe.secretKey', '');
+      if (!secretKey) throw new Error('STRIPE_SECRET_KEY is not configured');
+      this._stripe = new Stripe(secretKey, { apiVersion: '2025-02-24.acacia' });
+    }
+    return this._stripe;
   }
 
   constructEvent(rawBody: Buffer, signature: string): Stripe.Event {

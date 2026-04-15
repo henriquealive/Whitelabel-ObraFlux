@@ -7,15 +7,20 @@ import { PLAN_LIMITS } from '@obraflux/shared';
 
 @Injectable()
 export class SubscriptionsService {
-  private readonly stripe: Stripe;
+  private _stripe: Stripe | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-  ) {
-    this.stripe = new Stripe(configService.get<string>('stripe.secretKey', ''), {
-      apiVersion: '2025-02-24.acacia',
-    });
+  ) {}
+
+  private get stripe(): Stripe {
+    if (!this._stripe) {
+      const secretKey = this.configService.get<string>('stripe.secretKey', '');
+      if (!secretKey) throw new Error('STRIPE_SECRET_KEY is not configured');
+      this._stripe = new Stripe(secretKey, { apiVersion: '2025-02-24.acacia' });
+    }
+    return this._stripe;
   }
 
   async getSubscription(tenantId: string) {
