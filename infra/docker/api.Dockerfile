@@ -2,7 +2,9 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+# openssl1.1-compat provides libssl.so.1.1 needed by Prisma query engine on Alpine
+RUN apk add --no-cache openssl1.1-compat && \
+    corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
 COPY apps/api/package.json ./apps/api/package.json
@@ -38,7 +40,8 @@ CMD ["pnpm", "--filter", "api", "dev"]
 FROM node:20-alpine AS production
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+RUN apk add --no-cache openssl1.1-compat && \
+    corepack enable && corepack prepare pnpm@9.15.4 --activate
 
 ENV NODE_ENV=production
 
