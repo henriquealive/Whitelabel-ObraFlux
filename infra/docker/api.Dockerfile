@@ -18,7 +18,7 @@ WORKDIR /app
 COPY . .
 
 RUN pnpm --filter @obraflux/shared build
-RUN pnpm --filter @obraflux/database generate
+RUN pnpm --filter @obraflux/database db:generate
 RUN pnpm --filter api build
 
 # ── Stage 3: development (with hot reload) ─────────────────────────────────────

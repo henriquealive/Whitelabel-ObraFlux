@@ -12,3 +12,5 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export { PrismaClient };
 export * from '@prisma/client';
+export { getPaginationParams, buildPaginationMeta } from './helpers/pagination';
+export type { PaginationParams, PaginationResult } from './helpers/pagination';
