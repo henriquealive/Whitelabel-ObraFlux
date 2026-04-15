@@ -19,6 +19,7 @@ COPY . .
 
 RUN pnpm --filter @obraflux/shared build
 RUN pnpm --filter @obraflux/database db:generate
+RUN pnpm --filter @obraflux/database build
 RUN pnpm --filter api build
 
 # ── Stage 3: development (with hot reload) ─────────────────────────────────────
@@ -28,7 +29,7 @@ WORKDIR /app
 COPY . .
 
 RUN pnpm --filter @obraflux/shared build
-RUN pnpm --filter @obraflux/database generate
+RUN pnpm --filter @obraflux/database db:generate
 
 EXPOSE 3001
 CMD ["pnpm", "--filter", "api", "dev"]
@@ -50,12 +51,14 @@ COPY packages/database/package.json ./packages/database/package.json
 # Install production deps only
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
-# Copy built artefacts
+# Copy compiled artefacts from builder
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/database/generated ./packages/database/generated
+COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Generate Prisma client in production image (needs the schema)
+RUN pnpm --filter @obraflux/database db:generate
 
 EXPOSE 3001
 
