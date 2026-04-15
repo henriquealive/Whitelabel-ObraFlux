@@ -73,7 +73,6 @@ Thumbs.db
 .yarn/install-state.gz
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
 
 # Prisma generated
 packages/database/node_modules/
