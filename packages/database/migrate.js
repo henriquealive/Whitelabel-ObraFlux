@@ -48,7 +48,20 @@ async function migrate() {
 
       if (!stmt) continue;
 
-      await prisma.$executeRawUnsafe(stmt + ';');
+      try {
+        await prisma.$executeRawUnsafe(stmt + ';');
+      } catch (err) {
+        // Skip "already exists" errors — object was created in a previous
+        // partial migration run (e.g. ENUMs exist but Tenant table does not).
+        // 42P07 = duplicate table, 42710 = duplicate object (type/sequence),
+        // 42723 = duplicate function, 42701 = duplicate column,
+        // 42P17 = duplicate constraint
+        const ALREADY_EXISTS = ['42P07', '42710', '42723', '42701', '42P17'];
+        if (ALREADY_EXISTS.includes(err.code)) {
+          continue;
+        }
+        throw err;
+      }
     }
 
     console.log('[migrate] Initial migration applied successfully.');
