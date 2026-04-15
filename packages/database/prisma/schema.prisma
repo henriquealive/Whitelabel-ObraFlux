@@ -256,6 +256,7 @@ model RefreshToken {
 model Invitation {
   id         String    @id @default(cuid())
   tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   email      String
   role       Role
   token      String    @unique
