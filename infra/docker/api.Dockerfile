@@ -59,6 +59,7 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/database/dist ./packages/database/dist
 COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
+COPY --from=builder /app/packages/database/migrate.js ./packages/database/migrate.js
 
 # Generate Prisma client in production image (needs the schema)
 RUN pnpm --filter @obraflux/database db:generate
@@ -69,4 +70,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget -qO- http://localhost:3001/api/health || exit 1
 
 # Apply migrations then start the API (migrate deploy runs committed SQL files, no introspection needed)
-CMD ["sh", "-c", "pnpm --filter @obraflux/database db:migrate && node apps/api/dist/main.js"]
+CMD ["sh", "-c", "node packages/database/migrate.js && node apps/api/dist/main.js"]
