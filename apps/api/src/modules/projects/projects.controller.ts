@@ -4,7 +4,8 @@ import { ProjectsService } from './projects.service';
 import { TenantId } from '../../common/decorators/tenant.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { ProjectStatus, Role } from '@prisma/client';
+import { ProjectStatus } from '@prisma/client';
+import { Role } from '@obraflux/shared';
 
 @ApiTags('projects')
 @ApiBearerAuth()

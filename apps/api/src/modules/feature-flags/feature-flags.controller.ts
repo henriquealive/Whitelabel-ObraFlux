@@ -3,7 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { FeatureFlagsService } from './feature-flags.service';
 import { TenantId } from '../../common/decorators/tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { Role } from '@obraflux/shared';
 
 @ApiTags('feature-flags')
 @ApiBearerAuth()

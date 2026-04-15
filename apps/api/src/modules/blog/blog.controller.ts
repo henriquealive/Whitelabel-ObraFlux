@@ -5,7 +5,8 @@ import { Public } from '../../common/decorators/public.decorator';
 import { TenantId } from '../../common/decorators/tenant.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { BlogPostStatus, Role } from '@prisma/client';
+import { BlogPostStatus } from '@prisma/client';
+import { Role } from '@obraflux/shared';
 
 @ApiTags('blog')
 @Controller('blog')

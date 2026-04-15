@@ -14,7 +14,7 @@ import { MonitoringService } from './monitoring.service';
 @WebSocketGateway({ namespace: '/monitoring', cors: { origin: '*' } })
 export class WebRTCGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   private readonly logger = new Logger(WebRTCGateway.name);
 

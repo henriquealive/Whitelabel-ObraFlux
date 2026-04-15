@@ -21,7 +21,7 @@ export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
 
   async log(data: LogData) {
-    return this.prisma.auditLog.create({ data });
+    return this.prisma.auditLog.create({ data: data as any });
   }
 
   async findAll(tenantId: string, opts: {

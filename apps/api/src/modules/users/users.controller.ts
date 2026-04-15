@@ -4,7 +4,7 @@ import { UsersService } from './users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TenantId } from '../../common/decorators/tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { Role } from '@obraflux/shared';
 
 @ApiTags('users')
 @ApiBearerAuth()

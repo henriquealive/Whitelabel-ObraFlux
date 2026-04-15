@@ -4,7 +4,7 @@ import { TenantsService } from './tenants.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { TenantId } from '../../common/decorators/tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { Role } from '@obraflux/shared';
 
 @ApiTags('tenants')
 @Controller('tenants')

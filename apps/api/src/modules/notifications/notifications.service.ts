@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { NotificationChannel } from '@prisma/client';
+import { NotificationChannel, Prisma } from '@prisma/client';
 import { getPaginationParams, buildPaginationMeta } from '@obraflux/database';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class NotificationsService {
 
   async create(data: { userId: string; tenantId: string; type: string; title: string; body: string; channel?: NotificationChannel; payload?: Record<string, unknown> }) {
     return this.prisma.notification.create({
-      data: { userId: data.userId, tenantId: data.tenantId, type: data.type, title: data.title, body: data.body, channel: data.channel ?? NotificationChannel.IN_APP, data: data.payload },
+      data: { userId: data.userId, tenantId: data.tenantId, type: data.type, title: data.title, body: data.body, channel: data.channel ?? NotificationChannel.IN_APP, data: data.payload as Prisma.InputJsonValue },
     });
   }
 

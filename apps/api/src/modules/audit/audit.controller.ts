@@ -3,7 +3,8 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
 import { TenantId } from '../../common/decorators/tenant.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { Role, AuditAction } from '@prisma/client';
+import { AuditAction } from '@prisma/client';
+import { Role } from '@obraflux/shared';
 
 @ApiTags('audit')
 @ApiBearerAuth()

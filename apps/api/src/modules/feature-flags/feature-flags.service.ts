@@ -29,8 +29,8 @@ export class FeatureFlagsService {
   async setFlag(tenantId: string, key: string, isEnabled: boolean, config?: Record<string, unknown>) {
     return this.prisma.featureFlag.upsert({
       where: { tenantId_key: { tenantId, key } },
-      update: { isEnabled, config },
-      create: { tenantId, key, isEnabled, config },
+      update: { isEnabled, config: config as never },
+      create: { tenantId, key, isEnabled, config: config as never },
     });
   }
 }

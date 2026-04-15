@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProjectStatus, Role } from '@prisma/client';
-import { isValidTransition, getPaginationParams, buildPaginationMeta } from '@obraflux/shared';
+import { isValidTransition } from '@obraflux/shared';
+import { getPaginationParams, buildPaginationMeta } from '@obraflux/database';
 
 @Injectable()
 export class ProjectsService {
@@ -105,7 +106,7 @@ export class ProjectsService {
 
   async updateStatus(id: string, tenantId: string, newStatus: ProjectStatus) {
     const project = await this.findById(id, tenantId);
-    if (!isValidTransition(project.status, newStatus)) {
+    if (!isValidTransition(project.status as any, newStatus as any)) {
       throw new BadRequestException(`Cannot transition from ${project.status} to ${newStatus}`);
     }
     const data: Partial<{ status: ProjectStatus; actualEnd: Date }> = { status: newStatus };
