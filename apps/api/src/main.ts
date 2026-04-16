@@ -23,74 +23,80 @@ async function bootstrap() {
   http.createServer(expressApp).listen(port);
 
   // Bootstrap NestJS onto the same Express instance (does NOT bind a new port).
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
-    rawBody: true, // required for Stripe webhook signature verification
-  });
+  // Wrapped in try-catch so that any module initialisation failure logs clearly
+  // and does NOT crash the process — the health check above stays alive.
+  try {
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
+      rawBody: true, // required for Stripe webhook signature verification
+    });
 
-  const configService = app.get(ConfigService);
-  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+    const configService = app.get(ConfigService);
+    const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
-  // Security
-  app.use(helmet());
+    // Security
+    app.use(helmet());
 
-  // CORS
-  app.enableCors({
-    origin: configService.get<string>('CORS_ORIGINS', 'http://localhost:3000').split(','),
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  });
+    // CORS
+    app.enableCors({
+      origin: configService.get<string>('CORS_ORIGINS', 'http://localhost:3000').split(','),
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    });
 
-  // Global prefix
-  app.setGlobalPrefix('api');
+    // Global prefix
+    app.setGlobalPrefix('api');
 
-  // API versioning
-  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+    // API versioning
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
-  // Global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
+    // Global validation pipe
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: { enableImplicitConversion: true },
+      }),
+    );
 
-  // Global filters & interceptors
-  app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
+    // Global filters & interceptors
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Swagger (dev/staging only)
-  if (nodeEnv !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('ObraFlux API')
-      .setDescription('WhiteLabel SaaS for Architecture & Engineering')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .addTag('auth')
-      .addTag('tenants')
-      .addTag('users')
-      .addTag('projects')
-      .addTag('timeline')
-      .addTag('financial')
-      .addTag('files')
-      .addTag('monitoring')
-      .addTag('blog')
-      .addTag('coupons')
-      .addTag('maintenance')
-      .addTag('subscriptions')
-      .addTag('notifications')
-      .addTag('audit')
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    // Swagger (dev/staging only)
+    if (nodeEnv !== 'production') {
+      const config = new DocumentBuilder()
+        .setTitle('ObraFlux API')
+        .setDescription('WhiteLabel SaaS for Architecture & Engineering')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .addTag('auth')
+        .addTag('tenants')
+        .addTag('users')
+        .addTag('projects')
+        .addTag('timeline')
+        .addTag('financial')
+        .addTag('files')
+        .addTag('monitoring')
+        .addTag('blog')
+        .addTag('coupons')
+        .addTag('maintenance')
+        .addTag('subscriptions')
+        .addTag('notifications')
+        .addTag('audit')
+        .build();
+      const document = SwaggerModule.createDocument(app, config);
+      SwaggerModule.setup('api/docs', app, document);
+    }
+
+    // Attach all NestJS routes to the already-listening Express instance.
+    await app.init();
+
+    console.log(`🚀 ObraFlux API running on http://localhost:${port}/api`);
+    console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
+  } catch (err) {
+    console.error('[bootstrap] NestJS initialisation failed — health check still active:', err);
   }
-
-  // Attach all NestJS routes to the already-listening Express instance.
-  await app.init();
-
-  console.log(`🚀 ObraFlux API running on http://localhost:${port}/api`);
-  console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

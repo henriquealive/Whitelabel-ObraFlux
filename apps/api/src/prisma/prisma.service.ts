@@ -12,8 +12,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    await this.$connect();
-    this.logger.log('Database connected');
+    // Prisma connects lazily on first query — no eager $connect() needed.
+    // Calling $connect() here blocks the entire NestJS bootstrap and crashes
+    // the process if the DB is temporarily unreachable.
+    this.logger.log('PrismaService initialised');
   }
 
   async onModuleDestroy() {
