@@ -2,18 +2,32 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { ExpressAdapter } from '@nestjs/platform-express';
 import helmet from 'helmet';
+import express, { Request, Response } from 'express';
+import * as http from 'http';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const port = parseInt(process.env.PORT ?? '3001', 10);
+
+  // Create an Express instance and start listening IMMEDIATELY so Railway's
+  // health check passes while NestJS initialises (PrismaService.$connect,
+  // module wiring etc. can take 10-30 s on a cold start).
+  const expressApp = express();
+  expressApp.get('/api/health', (_req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+  http.createServer(expressApp).listen(port);
+
+  // Bootstrap NestJS onto the same Express instance (does NOT bind a new port).
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
     rawBody: true, // required for Stripe webhook signature verification
   });
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT', 3001);
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
 
   // Security
@@ -72,12 +86,9 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document);
   }
 
-  // Health check endpoint (bypasses NestJS guards — required by Railway/K8s probes)
-  app.getHttpAdapter().getInstance().get('/api/health', (_req: unknown, res: { status: (code: number) => { json: (body: unknown) => void } }) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-  });
+  // Attach all NestJS routes to the already-listening Express instance.
+  await app.init();
 
-  await app.listen(port);
   console.log(`🚀 ObraFlux API running on http://localhost:${port}/api`);
   console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
 }
