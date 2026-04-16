@@ -1,0 +1,8 @@
+[build]
+dockerfilePath = "infra/docker/web.Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
