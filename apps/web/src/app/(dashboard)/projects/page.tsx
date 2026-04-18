@@ -24,10 +24,14 @@ export default function ProjectsPage() {
   const [status, setStatus] = useState<string>('');
   const [page, setPage] = useState(1);
 
-  const { data, isLoading } = useQuery<any>({
+  const { data, isLoading, isError } = useQuery<any>({
     queryKey: ['projects', { search, status, page }],
-    queryFn: () =>
-      api.get(`/v1/projects?page=${page}&search=${search}&status=${status}`).then((r) => r.data.data ?? r.data),
+    queryFn: () => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      return api.get(`/v1/projects?${params.toString()}`).then((r) => r.data.data ?? r.data);
+    },
   });
 
   const projects = data?.data ?? [];
@@ -73,6 +77,8 @@ export default function ProjectsPage() {
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-slate-400">Carregando...</div>
+        ) : isError ? (
+          <div className="p-8 text-center text-red-500 text-sm">Erro ao carregar obras. Tente novamente.</div>
         ) : projects.length === 0 ? (
           <div className="p-8 text-center">
             <p className="text-slate-500">Nenhuma obra encontrada.</p>
