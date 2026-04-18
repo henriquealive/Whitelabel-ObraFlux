@@ -50,6 +50,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "slugify": "^1.6.6",
+    "express": "^4.22.1",
     "stripe": "^17.2.0",
     "uuid": "^10.0.0"
   },

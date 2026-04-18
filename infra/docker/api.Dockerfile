@@ -69,7 +69,7 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=5 \
   CMD wget -qO- http://localhost:${PORT:-3001}/api/health || exit 1
 
-# Run migration first (synchronously), then start the API.
-# Using && ensures the API only starts after tables exist.
-# Railway health check timeout is 300s — plenty of time for migrate.js to finish.
-CMD ["sh", "-c", "node packages/database/migrate.js && node apps/api/dist/main.js"]
+# Run migration synchronously then start the API regardless of migration result.
+# Using ; (not &&) so the API always starts — health check stays alive — even
+# if migrate.js fails, letting us see the error in Railway logs.
+CMD ["sh", "-c", "node packages/database/migrate.js; node apps/api/dist/main.js"]
