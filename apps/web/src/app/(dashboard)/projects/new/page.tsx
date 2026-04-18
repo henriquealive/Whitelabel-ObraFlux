@@ -34,7 +34,12 @@ export default function NewProjectPage() {
   const onSubmit = async (data: FormData) => {
     setError(null);
     try {
-      const res = await api.post('/v1/projects', data);
+      const payload = {
+        ...data,
+        startDate: data.startDate ? new Date(data.startDate).toISOString() : undefined,
+        estimatedEnd: data.estimatedEnd ? new Date(data.estimatedEnd).toISOString() : undefined,
+      };
+      const res = await api.post('/v1/projects', payload);
       const project = res.data.data ?? res.data;
       qc.invalidateQueries({ queryKey: ['projects'] });
       router.push(`/projects/${project.id as string}`);
