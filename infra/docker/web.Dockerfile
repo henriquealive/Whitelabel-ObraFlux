@@ -40,6 +40,11 @@ CMD ["pnpm", "--filter", "web", "dev"]
 FROM node:20-alpine AS production
 WORKDIR /app
 
+# Install pnpm: the Next.js standalone output includes the monorepo root
+# package.json which has "packageManager": "pnpm@9.15.4". Railway detects
+# this and requires pnpm to be present, otherwise the container fails to start.
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 

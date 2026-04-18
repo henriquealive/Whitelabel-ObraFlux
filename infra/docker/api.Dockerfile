@@ -66,8 +66,8 @@ RUN pnpm --filter @obraflux/database db:generate
 
 EXPOSE 3001
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:3001/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=5 \
+  CMD wget -qO- http://localhost:${PORT:-3001}/api/health || exit 1
 
 # Apply migrations then start the API (migrate deploy runs committed SQL files, no introspection needed)
 CMD ["sh", "-c", "node packages/database/migrate.js & node apps/api/dist/main.js"]

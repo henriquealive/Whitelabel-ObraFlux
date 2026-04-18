@@ -22,11 +22,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     try { branding = JSON.parse(brandingRaw); } catch { /* ignore */ }
   }
 
-  const primaryColor = branding?.primaryColor ?? '#2563EB';
-  const secondaryColor = branding?.secondaryColor ?? '#7C3AED';
-  const accentColor = branding?.accentColor ?? '#10B981';
-  const fontFamily = branding?.fontFamily ?? 'Inter';
-  const borderRadius = branding?.borderRadius ?? '8px';
+  // Reject values containing CSS breakout chars (semicolons, braces, angle brackets)
+  const safeCss = (value: string, fallback: string) =>
+    /^[^;{}<>]+$/.test(value) ? value : fallback;
+
+  const primaryColor = safeCss(branding?.primaryColor ?? '', '#2563EB');
+  const secondaryColor = safeCss(branding?.secondaryColor ?? '', '#7C3AED');
+  const accentColor = safeCss(branding?.accentColor ?? '', '#10B981');
+  const fontFamily = safeCss(branding?.fontFamily ?? '', 'Inter');
+  const borderRadius = safeCss(branding?.borderRadius ?? '', '8px');
+  // Strip </style> to prevent escaping the style block
+  const safeCustomCss = branding?.customCss?.replace(/<\/style\s*>/gi, '') ?? '';
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
@@ -37,8 +43,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href={`https://fonts.googleapis.com/css2?family=${fontFamily.replace(' ', '+')}:wght@400;500;600;700&display=swap`}
           rel="stylesheet"
         />
-        {branding?.customCss && (
-          <style dangerouslySetInnerHTML={{ __html: branding.customCss }} />
+        {safeCustomCss && (
+          <style dangerouslySetInnerHTML={{ __html: safeCustomCss }} />
         )}
         <style dangerouslySetInnerHTML={{
           __html: `
