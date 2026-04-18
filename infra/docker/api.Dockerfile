@@ -11,7 +11,7 @@ COPY apps/api/package.json ./apps/api/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/database/package.json ./packages/database/package.json
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 # ── Stage 2: builder ───────────────────────────────────────────────────────────
 FROM deps AS builder
@@ -52,7 +52,7 @@ COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/database/package.json ./packages/database/package.json
 
 # Install production deps only
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts
+RUN pnpm install --no-frozen-lockfile --prod --ignore-scripts
 
 # Copy compiled artefacts from builder
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
