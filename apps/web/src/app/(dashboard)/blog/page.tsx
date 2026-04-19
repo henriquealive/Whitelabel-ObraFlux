@@ -15,7 +15,12 @@ export default function BlogPage() {
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ['blog', { search, status }],
-    queryFn: () => api.get(`/v1/blog?search=${search}&status=${status}`).then((r) => r.data.data ?? r.data),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (status) params.set('status', status);
+      return api.get(`/v1/blog?${params}`).then((r) => r.data.data ?? r.data);
+    },
   });
 
   const posts = data?.data ?? [];

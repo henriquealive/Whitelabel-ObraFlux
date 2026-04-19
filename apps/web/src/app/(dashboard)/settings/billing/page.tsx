@@ -37,9 +37,9 @@ export default function BillingPage() {
   });
 
   const PLANS = [
-    { id: 'BASIC', name: 'Básico', price: { MONTHLY: 97, ANNUAL: 78 }, features: ['5 usuários', '3 projetos', '5 GB storage', 'Timeline & Arquivos', 'Blog'] },
-    { id: 'PROFESSIONAL', name: 'Profissional', price: { MONTHLY: 297, ANNUAL: 238 }, features: ['25 usuários', '20 projetos', '50 GB storage', 'Financeiro', 'Manutenção', 'Cupons'], highlight: true },
-    { id: 'ENTERPRISE', name: 'Enterprise', price: { MONTHLY: 797, ANNUAL: 638 }, features: ['Usuários ilimitados', 'Projetos ilimitados', '500 GB storage', 'Monitoramento ao vivo', 'Auditoria LGPD', 'Domínio próprio'] },
+    { id: 'BASIC', name: 'Básico', price: { MONTHLY: 197.90, ANNUAL: 147.90 }, features: ['5 usuários', '3 projetos', '5 GB storage', 'Timeline & Arquivos', 'Blog'] },
+    { id: 'PROFESSIONAL', name: 'Profissional', price: { MONTHLY: 297, ANNUAL: 238 }, features: ['20 usuários', '20 projetos', '50 GB storage', 'Financeiro', 'Manutenção', 'Cupons'], highlight: true },
+    { id: 'ENTERPRISE', name: 'Enterprise', price: { MONTHLY: 797, ANNUAL: 638 }, features: ['50 usuários (+R$15/usuário adicional)', 'Projetos ilimitados', '500 GB storage', 'Monitoramento ao vivo', 'Auditoria LGPD', 'Domínio próprio'] },
   ];
 
   return (

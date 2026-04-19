@@ -31,8 +31,15 @@ export default function WhiteLabelPage() {
     metaDescription: branding?.metaDescription ?? '',
   });
 
+  const [domain, setDomain] = useState(tenantData?.customDomain ?? '');
+
   const updateMutation = useMutation({
     mutationFn: (data: typeof form) => api.patch('/v1/tenants/me/branding', data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tenant-me'] }),
+  });
+
+  const domainMutation = useMutation({
+    mutationFn: (customDomain: string) => api.patch('/v1/tenants/me/custom-domain', { customDomain }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tenant-me'] }),
   });
 
@@ -117,9 +124,41 @@ export default function WhiteLabelPage() {
         </div>
       </div>
 
+      {/* Custom domain */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+        <div>
+          <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Domínio Personalizado</h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Subdomínio gratuito: <span className="font-mono text-blue-500">{tenantData?.slug ? `https://${tenantData.slug}.obraflux.com` : 'disponível após salvar'}</span>
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            placeholder="meudominio.com.br"
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+          />
+          <button
+            onClick={() => domainMutation.mutate(domain)}
+            disabled={domainMutation.isPending || !domain.trim()}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-60"
+          >
+            {domainMutation.isPending ? 'Salvando...' : 'Salvar domínio'}
+          </button>
+        </div>
+        {domainMutation.isSuccess && (
+          <p className="text-xs text-green-600 dark:text-green-400">Domínio atualizado. Adicione um CNAME apontando para <span className="font-mono">app.obraflux.com</span>.</p>
+        )}
+        {domainMutation.isError && (
+          <p className="text-xs text-red-500">{(domainMutation.error as any)?.response?.data?.message ?? 'Erro ao salvar domínio.'}</p>
+        )}
+      </div>
+
       {updateMutation.isSuccess && (
-        <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg px-3 py-2 text-sm">
-          ✓ Configurações salvas com sucesso!
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 rounded-lg px-3 py-2 text-sm">
+          Configurações salvas com sucesso!
         </div>
       )}
 

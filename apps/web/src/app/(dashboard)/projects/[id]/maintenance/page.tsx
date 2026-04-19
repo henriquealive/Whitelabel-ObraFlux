@@ -15,16 +15,33 @@ const STATUS_LABELS: Record<string, string> = {
 };
 const PRIORITY_LABELS = ['', 'Baixa', 'Média', 'Alta', 'Crítica'];
 
+const emptyForm = { title: '', description: '', priority: '2' };
+
 export default function MaintenancePage() {
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ['maintenance', id],
     queryFn: () => api.get(`/v1/projects/${id}/maintenance`).then((r) => r.data.data ?? r.data),
   });
 
-  const logs = data?.data ?? [];
+  const logs = data?.data ?? data ?? [];
+
+  const createMutation = useMutation({
+    mutationFn: (payload: typeof emptyForm) =>
+      api.post(`/v1/projects/${id}/maintenance`, { ...payload, priority: parseInt(payload.priority) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['maintenance', id] });
+      setShowForm(false);
+      setForm(emptyForm);
+      setFormError(null);
+    },
+    onError: (e: any) => setFormError(e?.response?.data?.message || 'Erro ao criar chamado.'),
+  });
 
   const updateMutation = useMutation({
     mutationFn: ({ logId, status }: { logId: string; status: string }) =>
@@ -36,10 +53,62 @@ export default function MaintenancePage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Pós-Obra & Manutenção</h2>
-        <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg">
-          + Novo registro
+        <button
+          onClick={() => setShowForm(true)}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
+        >
+          + Novo chamado
         </button>
       </div>
+
+      {showForm && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white">Novo chamado de manutenção</h3>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Título *</label>
+            <input
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              placeholder="Descreva o problema brevemente"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição</label>
+            <textarea
+              rows={3}
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Detalhes adicionais..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Prioridade</label>
+            <select
+              value={form.priority}
+              onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}
+              className="px-3 py-2 border border-slate-300 rounded-lg text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="1">Baixa</option>
+              <option value="2">Média</option>
+              <option value="3">Alta</option>
+              <option value="4">Crítica</option>
+            </select>
+          </div>
+          {formError && <p className="text-red-500 text-sm">{formError}</p>}
+          <div className="flex gap-3 justify-end">
+            <button onClick={() => { setShowForm(false); setForm(emptyForm); }} className="px-4 py-2 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700">Cancelar</button>
+            <button
+              onClick={() => form.title.trim() && createMutation.mutate(form)}
+              disabled={createMutation.isPending || !form.title.trim()}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-60"
+            >
+              {createMutation.isPending ? 'Criando...' : 'Criar chamado'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center text-slate-400 py-8">Carregando...</div>

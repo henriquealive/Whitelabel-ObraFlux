@@ -63,4 +63,13 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
   }
+
+  /* Custom scrollbar — dark corporate style */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  * { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+
+  html { scroll-behavior: smooth; }
 }
