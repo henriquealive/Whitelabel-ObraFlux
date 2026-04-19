@@ -16,6 +16,7 @@ export class ProjectsController {
   @Get()
   findAll(
     @TenantId() tenantId: string,
+    @CurrentUser() user: { id: string; role: Role },
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
@@ -23,7 +24,7 @@ export class ProjectsController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
-    return this.projectsService.findAll(tenantId, { page, limit, search, status, sortBy, sortOrder });
+    return this.projectsService.findAll(tenantId, { page, limit, search, status, sortBy, sortOrder, userId: user.id, userRole: user.role });
   }
 
   @Get('stats')

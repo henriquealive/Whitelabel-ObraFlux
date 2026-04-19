@@ -26,9 +26,13 @@ export class CouponsService {
     return { code: coupon.code, type: coupon.type, value: Number(coupon.value), description: coupon.description };
   }
 
-  async deactivate(id: string, tenantId: string) {
+  async setActive(id: string, tenantId: string, isActive: boolean) {
     const coupon = await this.prisma.coupon.findFirst({ where: { id, tenantId } });
     if (!coupon) throw new NotFoundException('Coupon not found');
-    return this.prisma.coupon.update({ where: { id }, data: { isActive: false } });
+    return this.prisma.coupon.update({ where: { id }, data: { isActive } });
+  }
+
+  async deactivate(id: string, tenantId: string) {
+    return this.setActive(id, tenantId, false);
   }
 }

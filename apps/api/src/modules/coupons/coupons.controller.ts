@@ -28,9 +28,15 @@ export class CouponsController {
     return this.couponsService.create(tenantId, body);
   }
 
+  @Patch(':id/activate')
+  @Roles(Role.ADMIN)
+  activate(@Param('id') id: string, @TenantId() tenantId: string) {
+    return this.couponsService.setActive(id, tenantId, true);
+  }
+
   @Patch(':id/deactivate')
   @Roles(Role.ADMIN)
   deactivate(@Param('id') id: string, @TenantId() tenantId: string) {
-    return this.couponsService.deactivate(id, tenantId);
+    return this.couponsService.setActive(id, tenantId, false);
   }
 }

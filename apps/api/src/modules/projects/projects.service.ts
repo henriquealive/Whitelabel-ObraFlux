@@ -20,13 +20,18 @@ export class ProjectsService {
     status?: ProjectStatus;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
+    userId?: string;
+    userRole?: Role;
   } = {}) {
     const { skip, take, page, limit } = getPaginationParams({ page: opts.page, limit: opts.limit });
-    const where = {
+    const where: Record<string, unknown> = {
       tenantId,
       deletedAt: null,
       ...(opts.status && { status: opts.status }),
       ...(opts.search && { name: { contains: opts.search, mode: 'insensitive' as const } }),
+      ...(opts.userRole === Role.CLIENT && opts.userId && {
+        members: { some: { userId: opts.userId } },
+      }),
     };
     const orderBy = opts.sortBy
       ? { [opts.sortBy]: opts.sortOrder || 'asc' }
