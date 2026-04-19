@@ -23,7 +23,8 @@ export function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-export function initials(name: string) {
+export function initials(name: string | undefined | null) {
+  if (!name) return '?';
   return name
     .split(' ')
     .slice(0, 2)
