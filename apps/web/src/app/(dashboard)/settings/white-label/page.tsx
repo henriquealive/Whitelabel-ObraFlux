@@ -64,7 +64,7 @@ export default function WhiteLabelPage() {
 
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-5">
         <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Empresa</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {field('companyName', 'Nome da empresa')}
           {field('tagline', 'Slogan')}
           {field('supportEmail', 'E-mail de suporte')}
@@ -74,7 +74,7 @@ export default function WhiteLabelPage() {
 
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-5">
         <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Cores</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {field('primaryColor', 'Cor primária', 'color')}
           {field('secondaryColor', 'Cor secundária', 'color')}
           {field('accentColor', 'Cor de destaque', 'color')}
@@ -98,7 +98,7 @@ export default function WhiteLabelPage() {
 
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-5">
         <h2 className="font-semibold text-slate-900 dark:text-white text-sm">Tipografia & Forma</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Fonte</label>
             <select value={form.fontFamily} onChange={(e) => setForm({ ...form, fontFamily: e.target.value })}

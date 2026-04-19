@@ -91,25 +91,25 @@ export default function TeamPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Equipe</h1>
+        <h1 className="text-2xl font-bold text-white">Equipe</h1>
         <p className="text-slate-500 text-sm">Gerencie membros e convites</p>
       </div>
 
       {/* Invite form */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-white mb-4">Convidar membro</h2>
-        <div className="flex gap-3">
+      <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+        <h2 className="text-base font-semibold text-white mb-4">Convidar membro</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="email"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="email@empresa.com"
-            className="flex-1 border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900"
+            className="flex-1 border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value)}
-            className="border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-900"
+            className="border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>{r.label}</option>
@@ -127,54 +127,56 @@ export default function TeamPage() {
 
       {/* Pending invitations */}
       {invitations.length > 0 && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-700">
+            <h2 className="text-base font-semibold text-white">
               Convites pendentes
-              <span className="ml-2 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
+              <span className="ml-2 text-xs bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full">
                 {invitations.length}
               </span>
             </h2>
           </div>
-          <table className="w-full text-sm">
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-              {invitations.map((inv) => (
-                <tr key={inv.id} className="px-6">
-                  <td className="px-6 py-3 text-slate-700 dark:text-slate-300">{inv.email}</td>
-                  <td className="px-6 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getRoleBadge(inv.role)}`}>
-                      {getRoleLabel(inv.role)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-slate-400 text-xs">
-                    Expira {formatDate(inv.expiresAt, { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-3 text-right">
-                    <button
-                      onClick={() => cancelInviteMutation.mutate(inv.id)}
-                      className="text-xs text-red-500 hover:text-red-700"
-                    >
-                      Cancelar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[480px]">
+              <tbody className="divide-y divide-slate-700">
+                {invitations.map((inv) => (
+                  <tr key={inv.id}>
+                    <td className="px-6 py-3 text-slate-300">{inv.email}</td>
+                    <td className="px-6 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getRoleBadge(inv.role)}`}>
+                        {getRoleLabel(inv.role)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-slate-500 text-xs hidden sm:table-cell">
+                      Expira {formatDate(inv.expiresAt, { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      <button
+                        onClick={() => cancelInviteMutation.mutate(inv.id)}
+                        className="text-xs text-red-400 hover:text-red-300"
+                      >
+                        Cancelar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Members */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+      <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-700">
+          <h2 className="text-base font-semibold text-white">
             Membros da equipe
             <span className="ml-2 text-xs text-slate-500">{members.length} pessoas</span>
           </h2>
         </div>
-        <div className="divide-y divide-slate-100 dark:divide-slate-700">
+        <div className="divide-y divide-slate-700">
           {members.map((member) => (
-            <div key={member.id} className="flex items-center gap-4 px-6 py-4">
+            <div key={member.id} className="flex flex-wrap items-center gap-3 px-6 py-4">
               <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                 {member.avatarUrl ? (
                   <img src={member.avatarUrl} alt={member.name} className="w-full h-full rounded-full object-cover" />
@@ -183,51 +185,36 @@ export default function TeamPage() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                    {member.name}
-                  </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-white truncate">{member.name}</span>
                   {member.id === user?.id && (
-                    <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-500 px-1.5 py-0.5 rounded">
-                      Você
-                    </span>
+                    <span className="text-xs bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded">Você</span>
                   )}
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getRoleBadge(member.role)}`}>
+                    {getRoleLabel(member.role)}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-500 truncate">{member.email}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getRoleBadge(member.role)}`}>
-                  {getRoleLabel(member.role)}
-                </span>
-                {member.lastLoginAt && (
-                  <span className="text-xs text-slate-400 hidden sm:block">
-                    {formatDate(member.lastLoginAt, { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                  </span>
-                )}
-                {member.id !== user?.id && (
-                  <div className="flex gap-2">
-                    <select
-                      value={member.role}
-                      onChange={(e) => updateRoleMutation.mutate({ id: member.id, role: e.target.value })}
-                      className="text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1 bg-white dark:bg-slate-900"
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r.value} value={r.value}>{r.label}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Remover ${member.name} da equipe?`)) {
-                          removeUserMutation.mutate(member.id);
-                        }
-                      }}
-                      className="text-xs text-red-500 hover:text-red-700 px-2 py-1 border border-red-200 dark:border-red-800 rounded"
-                    >
-                      Remover
-                    </button>
-                  </div>
-                )}
-              </div>
+              {member.id !== user?.id && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <select
+                    value={member.role}
+                    onChange={(e) => updateRoleMutation.mutate({ id: member.id, role: e.target.value })}
+                    className="text-xs border border-slate-600 rounded px-2 py-1 bg-slate-900 text-white"
+                  >
+                    {ROLES.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => { if (confirm(`Remover ${member.name} da equipe?`)) removeUserMutation.mutate(member.id); }}
+                    className="text-xs text-red-400 hover:text-red-300 px-2 py-1 border border-red-800 rounded"
+                  >
+                    Remover
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
